@@ -1,0 +1,45 @@
+name: Terraform Plan and Apply
+
+on:
+  push:
+    paths:
+      - '01-mg/**'
+    branches:
+      - main
+
+jobs:
+  terraform:
+    name: 'Terraform CI/CD'
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: 01-mg
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: 🧰 Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8.4  # oder deine verwendete Version
+
+      - name: 🔐 Azure Login (via environment variables)
+        run: |
+          echo "Authenticating with Azure..."
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+
+      - name: 📦 Terraform Init
+        run: terraform init
+
+      - name: 🔍 Terraform Plan
+        run: terraform plan
+
+      - name: 🚀 Terraform Apply (auto-approve)
+        if: github.ref == 'refs/heads/main'
+        run: terraform apply -auto-approve
